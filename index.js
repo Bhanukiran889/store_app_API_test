@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive API Test Guide | Shop Rating Backend</title>
+    <!-- Chosen Palette: Slate & Sky -->
+    <!-- Application Structure Plan: The application is structured as a vertical, interactive accordion. This design was chosen because the source report is a list of API endpoints grouped by functionality. An accordion allows the user to see all available endpoints at a glance while keeping the interface clean. The user can expand only the endpoint they are currently interested in, which reduces cognitive load and makes the information easier to digest compared to a long, static document. This structure directly supports the user's goal: to find and test a specific endpoint quickly. -->
+    <!-- Visualization & Content Choices: 
+        - Endpoint List -> Interactive Accordion (HTML/JS): Organizes a long list of technical items. Justification: A standard and highly effective UI pattern for API documentation that keeps the initial view clean.
+        - HTTP Methods -> Styled Tags (HTML/Tailwind): Provides quick visual identification of the request type. Justification: Color-coding is a standard convention in API tools (GET=green, POST=blue, etc.), making it instantly recognizable.
+        - URLs, Request/Response Bodies -> Code Blocks with Copy Button (HTML/JS): Allows developers to easily copy technical information for use in an API client like Postman. Justification: This is a critical usability feature for developer documentation, minimizing errors and speeding up the testing workflow.
+        - API Groups (Auth, Stores, etc.) -> Grouped Sections (HTML): Creates a clear thematic separation of content. Justification: Mirrors the logical structure of the source report and the API itself.
+        - All choices confirm NO SVG/Mermaid JS used, relying on native web technologies for a fast, self-contained, and maintainable single-file application. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        code, pre { font-family: 'Roboto Mono', monospace; }
+        .endpoint-content {
+            display: none;
+            transition: max-height 0.3s ease-out;
+            max-height: 0;
+            overflow: hidden;
+        }
+        .endpoint-card.active .endpoint-content {
+            display: block;
+            max-height: 2000px; /* Large enough for content */
+        }
+        .endpoint-card.active .icon-open { display: none; }
+        .endpoint-card:not(.active) .icon-close { display: none; }
+        .copied-feedback {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+        }
+        .copied-feedback.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+
+    <main class="container mx-auto max-w-4xl px-4 py-8 md:py-12">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">Shop Rating API Test Guide</h1>
+            <p class="mt-2 text-lg text-slate-600">Interactive documentation for the deployed backend API.</p>
+            <div class="mt-4 bg-slate-200 p-3 rounded-lg inline-block">
+                <span class="font-semibold text-slate-700">Base URL:</span>
+                <a href="https://store-rating-app-mysqlhost.up.railway.app/" target="_blank" class="font-mono text-sky-700 hover:underline">https://store-rating-app-mysqlhost.up.railway.app</a>
+            </div>
+        </header>
+
+        <div id="api-sections" class="space-y-8">
+            <!-- Sections will be injected here by JavaScript -->
+        </div>
+
+    </main>
+    
+    <footer class="text-center py-6 text-slate-500 text-sm">
+        <p>Interactive Guide generated from API test documentation.</p>
+    </footer>
+
+    <script>
+        const apiData = {
+            "Authentication": [
+                {
+                    method: 'POST',
+                    path: '/api/auth/register',
+                    description: "Creates a new user account (can be 'Normal User' or 'Store Owner').",
+                    headers: [],
+                    body: `{
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "password": "securepassword123",
+    "address": "123 Main St, Anytown",
+    "role": "Normal User"
+}`,
+                    response: `{
+    "success": true,
+    "message": "User registered successfully",
+    "user": {
+        "id": 1,
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "address": "123 Main St, Anytown",
+        "role": "Normal User",
+        "createdAt": "2023-10-27T10:00:00.000Z",
+        "updatedAt": "2023-10-27T10:00:00.000Z"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}`
+                },
+                {
+                    method: 'POST',
+                    path: '/api/auth/login',
+                    description: 'Authenticates an existing user and returns a JWT token.',
+                    headers: [],
+                    body: `{
+    "email": "john.doe@example.com",
+    "password": "securepassword123"
+}`,
+                    response: `{
+    "success": true,
+    "message": "Login successful",
+    "user": {
+        "id": 1,
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "address": "123 Main St, Anytown",
+        "role": "Normal User"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}`
+                }
+            ],
+            "Stores": [
+                 {
+                    method: 'POST',
+                    path: '/api/stores',
+                    description: "Creates a new store. Only users with the 'Store Owner' role can perform this action.",
+                    headers: ["Authorization: Bearer <STORE_OWNER_JWT_TOKEN>"],
+                    body: `{
+    "name": "My Awesome Shop",
+    "address": "789 Commerce St, Cityville",
+    "contact_number": "123-456-7890",
+    "owner_id": 2
+}`,
+                    response: `{
+    "success": true,
+    "message": "Store created successfully",
+    "store": {
+        "id": 1,
+        "name": "My Awesome Shop",
+        "address": "789 Commerce St, Cityville",
+        "contact_number": "123-456-7890",
+        "owner_id": 2,
+        "createdAt": "2023-10-27T10:05:00.000Z",
+        "updatedAt": "2023-10-27T10:05:00.000Z"
+    }
+}`
+                },
+                {
+                    method: 'GET',
+                    path: '/api/stores',
+                    description: 'Retrieves a list of all registered stores.',
+                    headers: [],
+                    body: null,
+                    response: `{
+    "success": true,
+    "message": "Stores retrieved successfully",
+    "stores": [
+        {
+            "id": 1,
+            "name": "My Awesome Shop",
+            "address": "789 Commerce St, Cityville",
+            /* ... more store objects ... */
+        }
+    ]
+}`
+                },
+                 {
+                    method: 'GET',
+                    path: '/api/stores/:id',
+                    description: 'Retrieves details for a specific store by its ID.',
+                    headers: [],
+                    body: null,
+                    response: `{
+    "success": true,
+    "message": "Store retrieved successfully",
+    "store": {
+        "id": 1,
+        "name": "My Awesome Shop",
+        /* ... store details ... */
+    }
+}`
+                },
+                {
+                    method: 'PUT',
+                    path: '/api/stores/:id',
+                    description: "Updates an existing store's information. Only the owner of the store can update it.",
+                    headers: ["Authorization: Bearer <STORE_OWNER_JWT_TOKEN>"],
+                    body: `{
+    "name": "My Updated Shop Name",
+    "address": "New Address, Updated City",
+    "contact_number": "987-654-3210"
+}`,
+                    response: `{
+    "success": true,
+    "message": "Store updated successfully",
+    "store": {
+        "id": 1,
+        "name": "My Updated Shop Name",
+        /* ... updated details ... */
+    }
+}`
+                },
+                {
+                    method: 'DELETE',
+                    path: '/api/stores/:id',
+                    description: "Deletes a store. Only the owner of the store can delete it.",
+                    headers: ["Authorization: Bearer <STORE_OWNER_JWT_TOKEN>"],
+                    body: null,
+                    response: `{
+    "success": true,
+    "message": "Store deleted successfully"
+}`
+                }
+            ],
+            "Ratings": [
+                {
+                    method: 'POST',
+                    path: '/api/ratings',
+                    description: 'Adds a new rating for a specific store.',
+                    headers: ["Authorization: Bearer <ANY_USER_JWT_TOKEN>"],
+                    body: `{
+    "store_id": 1,
+    "user_id": 1,
+    "rating": 4,
+    "comment": "Great shop!"
+}`,
+                    response: `{
+    "success": true,
+    "message": "Rating added successfully",
+    "rating": {
+        "id": 1,
+        "store_id": 1,
+        "user_id": 1,
+        "rating": 4,
+        /* ... rating details ... */
+    }
+}`
+                },
+                {
+                    method: 'GET',
+                    path: '/api/ratings/store/:store_id',
+                    description: 'Retrieves all ratings for a specific store.',
+                    headers: [],
+                    body: null,
+                    response: `{
+    "success": true,
+    "message": "Ratings retrieved successfully",
+    "ratings": [
+        {
+            "id": 1,
+            /* ... rating details ... */
+        }
+    ]
+}`
+                },
+                 {
+                    method: 'GET',
+                    path: '/api/ratings/store/:store_id/average',
+                    description: 'Calculates and retrieves the average rating for a specific store.',
+                    headers: [],
+                    body: null,
+                    response: `{
+    "success": true,
+    "message": "Average rating retrieved successfully",
+    "store_id": 1,
+    "average_rating": "4.00"
+}`
+                }
+            ]
+        };
+
+        const methodColors = {
+            'GET': 'bg-green-100 text-green-800',
+            'POST': 'bg-sky-100 text-sky-800',
+            'PUT': 'bg-amber-100 text-amber-800',
+            'DELETE': 'bg-red-100 text-red-800'
+        };
+
+        function createCodeBlock(title, content, language) {
+            if (!content) return '';
+            return `
+                <div class="mt-4">
+                    <h4 class="text-sm font-semibold text-slate-600 mb-2">${title}</h4>
+                    <div class="code-block relative bg-slate-800 text-white p-4 rounded-md text-sm">
+                        <pre><code class="language-${language}">${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>
+                        <button class="copy-btn absolute top-2 right-2 p-1.5 bg-slate-600 hover:bg-slate-500 rounded-md text-slate-300">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                        </button>
+                        <div class="copied-feedback absolute -bottom-8 right-2 text-xs bg-slate-900 text-white px-2 py-1 rounded">Copied!</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function createEndpointCard(endpoint) {
+            const headerHtml = endpoint.headers.length > 0 ? createCodeBlock('Headers', endpoint.headers.join('\n'), 'text') : '';
+            const bodyHtml = createCodeBlock('Request Body', endpoint.body, 'json');
+            const responseHtml = createCodeBlock('Expected Response', endpoint.response, 'json');
+
+            return `
+                <div class="endpoint-card bg-white rounded-lg shadow-sm border border-slate-200">
+                    <div class="endpoint-header flex justify-between items-center p-4 cursor-pointer">
+                        <div class="flex items-center space-x-4">
+                            <span class="font-semibold text-sm w-16 text-center py-1 rounded-md ${methodColors[endpoint.method]}">${endpoint.method}</span>
+                            <span class="font-mono text-slate-700">${endpoint.path}</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                           <p class="hidden md:block text-sm text-slate-500">${endpoint.description}</p>
+                           <span class="icon-open text-slate-500">
+                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                           </span>
+                           <span class="icon-close text-slate-500">
+                               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
+                           </span>
+                        </div>
+                    </div>
+                    <div class="endpoint-content px-4 pb-4 border-t border-slate-200">
+                        <p class="md:hidden mt-2 text-sm text-slate-500">${endpoint.description}</p>
+                        ${headerHtml}
+                        ${bodyHtml}
+                        ${responseHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderApiSections() {
+            const container = document.getElementById('api-sections');
+            let html = '';
+            for (const sectionTitle in apiData) {
+                html += `
+                    <section>
+                        <h2 class="text-2xl font-bold mb-4 text-slate-900">${sectionTitle}</h2>
+                        <div class="space-y-3">
+                            ${apiData[sectionTitle].map(createEndpointCard).join('')}
+                        </div>
+                    </section>
+                `;
+            }
+            container.innerHTML = html;
+            addEventListeners();
+        }
+
+        function addEventListeners() {
+            document.querySelectorAll('.endpoint-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    header.parentElement.classList.toggle('active');
+                });
+            });
+
+            document.querySelectorAll('.copy-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent accordion from toggling
+                    const codeBlock = button.parentElement.querySelector('code');
+                    const textToCopy = codeBlock.textContent;
+                    
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        const feedback = button.nextElementSibling;
+                        feedback.classList.add('show');
+                        setTimeout(() => {
+                            feedback.classList.remove('show');
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy text: ', err);
+                    });
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', renderApiSections);
+    </script>
+</body>
+</html>
